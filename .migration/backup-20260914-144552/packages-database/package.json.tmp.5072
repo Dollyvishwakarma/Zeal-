@@ -1,0 +1,27 @@
+{
+  "name": "@zeal/database",
+  "version": "0.0.2",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts",
+    "./server": "./src/server.ts",
+    "./admin": "./src/admin.ts",
+    "./types": "./src/types.ts",
+    "./helpers": "./src/helpers/index.ts",
+    "./queries": "./src/queries/index.ts",
+    "./services": "./src/services/index.ts"
+  },
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "gen-types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_ID --schema public > src/types.ts"
+  },
+  "dependencies": {
+    "@supabase/ssr": "0.12.6",
+    "@supabase/supabase-js": "2.115.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}

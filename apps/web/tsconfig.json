@@ -1,0 +1,25 @@
+{
+  "extends": "../../tooling/typescript/tsconfig.base.json",
+  "ignoreDeprecations": "6.0",
+  "compilerOptions": {
+    "typeRoots": ["./types", "./node_modules/@types"],
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "moduleResolution": "bundler",
+    "paths": {
+      "@/*": ["./*"]
+    },
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
+}

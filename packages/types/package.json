@@ -1,0 +1,18 @@
+{
+  "name": "@zeal/types",
+  "version": "0.0.1",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@trpc/server": "11.18.0",
+    "typescript": "^5.5.0",
+    "zod": "4.4.3"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/server/index.ts"
+  }
+}

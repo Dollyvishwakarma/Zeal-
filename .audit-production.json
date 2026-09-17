@@ -1,0 +1,346 @@
+{
+  "missing": [
+    {
+      "route": "/api/admin/ai-consultants",
+      "usedIn": [
+        "apps\\admin\\app\\(dashboard)\\ai-consultants\\page.tsx"
+      ]
+    },
+    {
+      "route": "/api/admin/stats",
+      "usedIn": [
+        "apps\\admin\\app\\(dashboard)\\analytics\\page.tsx",
+        "apps\\admin\\app\\(dashboard)\\dashboard\\page.tsx"
+      ]
+    },
+    {
+      "route": "/api/admin/bookings",
+      "usedIn": [
+        "apps\\admin\\app\\(dashboard)\\bookings\\page.tsx"
+      ]
+    },
+    {
+      "route": "/api/admin/bookings/${id}",
+      "usedIn": [
+        "apps\\admin\\app\\(dashboard)\\bookings\\page.tsx"
+      ]
+    },
+    {
+      "route": "/api/admin/broadcast",
+      "usedIn": [
+        "apps\\admin\\app\\(dashboard)\\broadcast\\page.tsx"
+      ]
+    },
+    {
+      "route": "/api/admin/recordings/${id}/send",
+      "usedIn": [
+        "apps\\admin\\app\\(dashboard)\\recordings\\page.tsx"
+      ]
+    },
+    {
+      "route": "/api/admin/invites",
+      "usedIn": [
+        "apps\\admin\\app\\(dashboard)\\settings\\admins\\page.tsx"
+      ]
+    },
+    {
+      "route": "/api/admin/verification",
+      "usedIn": [
+        "apps\\admin\\app\\(dashboard)\\verification\\page.tsx"
+      ]
+    },
+    {
+      "route": "/api/admin/wallet/transactions",
+      "usedIn": [
+        "apps\\admin\\app\\(dashboard)\\wallet\\page.tsx"
+      ]
+    },
+    {
+      "route": "/api/admin/wallet/topup",
+      "usedIn": [
+        "apps\\admin\\app\\(dashboard)\\wallet\\page.tsx"
+      ]
+    },
+    {
+      "route": "/api/admin/withdrawals",
+      "usedIn": [
+        "apps\\admin\\app\\(dashboard)\\withdrawals\\page.tsx"
+      ]
+    },
+    {
+      "route": "/api/admin/consultants/${profile",
+      "usedIn": [
+        "apps\\admin\\app\\consultant\\dashboard\\page.tsx"
+      ]
+    },
+    {
+      "route": "/api/error-log",
+      "usedIn": [
+        "apps\\admin\\components\\shared\\ErrorBoundary.tsx"
+      ]
+    },
+    {
+      "route": "/api/zeal/chat",
+      "usedIn": [
+        "apps\\web\\app\\(app)\\chat\\ChatClient.tsx",
+        "apps\\web\\components\\zeal\\ZealChat.tsx"
+      ]
+    },
+    {
+      "route": "/api/ai/consultants/${params.id}",
+      "usedIn": [
+        "apps\\web\\app\\ai-astrologers\\[id]\\page.tsx"
+      ]
+    },
+    {
+      "route": "/api/auth/sync-user",
+      "usedIn": [
+        "apps\\web\\app\\auth\\callback\\page.tsx",
+        "apps\\web\\app\\auth\\register\\page.tsx"
+      ]
+    },
+    {
+      "route": "/api/bazaar/listings",
+      "usedIn": [
+        "apps\\web\\app\\bazaar\\page.tsx"
+      ]
+    },
+    {
+      "route": "/api/users/${consultantId}/profile",
+      "usedIn": [
+        "apps\\web\\app\\booking\\page.tsx"
+      ]
+    },
+    {
+      "route": "/api/bookings",
+      "usedIn": [
+        "apps\\web\\app\\bookings\\page.tsx",
+        "apps\\web\\app\\call\\[bookingId]\\page.tsx",
+        "apps\\web\\components\\booking\\BookingWizard.tsx"
+      ]
+    },
+    {
+      "route": "/api/calls/start",
+      "usedIn": [
+        "apps\\web\\app\\call\\[bookingId]\\page.tsx",
+        "apps\\web\\hooks\\useCall.ts"
+      ]
+    },
+    {
+      "route": "/api/chat/conversations",
+      "usedIn": [
+        "apps\\web\\app\\chat\\[id]\\page.tsx",
+        "apps\\web\\hooks\\useChat.ts"
+      ]
+    },
+    {
+      "route": "/api/consultant/availability",
+      "usedIn": [
+        "apps\\web\\app\\consultant\\availability\\page.tsx"
+      ]
+    },
+    {
+      "route": "/api/consultant/pulse",
+      "usedIn": [
+        "apps\\web\\app\\consultant\\dashboard\\page.tsx"
+      ]
+    },
+    {
+      "route": "/api/consultant/earnings",
+      "usedIn": [
+        "apps\\web\\app\\consultant\\earnings\\page.tsx"
+      ]
+    },
+    {
+      "route": "/api/consultant/onboarding",
+      "usedIn": [
+        "apps\\web\\app\\consultant\\onboarding\\page.tsx"
+      ]
+    },
+    {
+      "route": "/api/users/me/profile",
+      "usedIn": [
+        "apps\\web\\app\\consultant\\settings\\page.tsx",
+        "apps\\web\\app\\consultant\\white-label\\page.tsx"
+      ]
+    },
+    {
+      "route": "/api/users",
+      "usedIn": [
+        "apps\\web\\app\\consultant\\settings\\page.tsx",
+        "apps\\web\\components\\profile\\PostGrid.tsx",
+        "apps\\web\\components\\shared\\FollowButton.tsx"
+      ]
+    },
+    {
+      "route": "/api/users/${params.id}/profile",
+      "usedIn": [
+        "apps\\web\\app\\consultant\\[id]\\page.tsx"
+      ]
+    },
+    {
+      "route": "/api/posts/create",
+      "usedIn": [
+        "apps\\web\\app\\create\\page.tsx"
+      ]
+    },
+    {
+      "route": "/api/explore/consultants",
+      "usedIn": [
+        "apps\\web\\app\\dashboard\\page.tsx",
+        "apps\\web\\app\\explore\\page.tsx"
+      ]
+    },
+    {
+      "route": "/api/posts",
+      "usedIn": [
+        "apps\\web\\app\\post\\[id]\\page.tsx",
+        "apps\\web\\components\\feed\\CommentThread.tsx",
+        "apps\\web\\components\\feed\\PostCard.tsx"
+      ]
+    },
+    {
+      "route": "/api/quests",
+      "usedIn": [
+        "apps\\web\\app\\quests\\page.tsx"
+      ]
+    },
+    {
+      "route": "/api/referral",
+      "usedIn": [
+        "apps\\web\\app\\referral\\page.tsx"
+      ]
+    },
+    {
+      "route": "/api/sparks/feed",
+      "usedIn": [
+        "apps\\web\\app\\sparks\\page.tsx"
+      ]
+    },
+    {
+      "route": "/api/ai/assist",
+      "usedIn": [
+        "apps\\web\\components\\ai-assistant\\AIAssistant.tsx"
+      ]
+    },
+    {
+      "route": "/api/bookings/availability",
+      "usedIn": [
+        "apps\\web\\components\\booking\\SlotPicker.tsx"
+      ]
+    },
+    {
+      "route": "/api/bookings/${booking.id}/cancel",
+      "usedIn": [
+        "apps\\web\\components\\bookings\\BookingCard.tsx"
+      ]
+    },
+    {
+      "route": "/api/calls/end",
+      "usedIn": [
+        "apps\\web\\components\\call\\AudioCall.tsx",
+        "apps\\web\\components\\call\\CallInterface.tsx",
+        "apps\\web\\components\\call\\IncomingCallOverlay.tsx"
+      ]
+    },
+    {
+      "route": "/api/payments/verify",
+      "usedIn": [
+        "apps\\web\\components\\payments\\RazorpayButton.tsx"
+      ]
+    },
+    {
+      "route": "/api/payments/create-order",
+      "usedIn": [
+        "apps\\web\\components\\profile\\BookingModal.tsx"
+      ]
+    },
+    {
+      "route": "/api/bookings/${id}/cancel",
+      "usedIn": [
+        "apps\\web\\hooks\\useBooking.ts"
+      ]
+    },
+    {
+      "route": "/api/wallet/balance",
+      "usedIn": [
+        "apps\\web\\hooks\\useCall.ts",
+        "apps\\web\\hooks\\useWallet.ts"
+      ]
+    },
+    {
+      "route": "/api/chat",
+      "usedIn": [
+        "apps\\web\\hooks\\useChat.ts"
+      ]
+    },
+    {
+      "route": "/api/posts/feed",
+      "usedIn": [
+        "apps\\web\\hooks\\useFeed.ts"
+      ]
+    },
+    {
+      "route": "/api/notifications/${id}/read",
+      "usedIn": [
+        "apps\\web\\hooks\\useNotifications.ts",
+        "apps\\web\\hooks\\useRealtimeNotifications.ts"
+      ]
+    },
+    {
+      "route": "/api/notifications",
+      "usedIn": [
+        "apps\\web\\hooks\\useRealtimeNotifications.ts"
+      ]
+    },
+    {
+      "route": "/api/wallet/topup",
+      "usedIn": [
+        "apps\\web\\hooks\\useWallet.ts"
+      ]
+    },
+    {
+      "route": "/api/wallet/transactions",
+      "usedIn": [
+        "apps\\web\\hooks\\useWallet.ts"
+      ]
+    },
+    {
+      "route": "/api/realtime/publish",
+      "usedIn": [
+        "apps\\web\\hooks\\useWebSocket.ts"
+      ]
+    },
+    {
+      "route": "/api/debug/log",
+      "usedIn": [
+        "apps\\web\\lib\\logger\\index.ts",
+        "apps\\web\\lib\\observability\\index.ts"
+      ]
+    }
+  ],
+  "deadButtons": [
+    "apps\\web\\app\\profile\\edit\\page.tsx (1 alert calls)",
+    "apps\\web\\components\\bookings\\BookingCard.tsx (1 alert calls)",
+    "apps\\web\\components\\profile\\BookingModal.tsx (2 alert calls)",
+    "apps\\web\\components\\shared\\ConsultantProfile.tsx (1 alert calls)"
+  ],
+  "mocks": [
+    "apps\\web\\app\\api\\bazaar\\listings\\route.ts",
+    "apps\\web\\app\\api\\explore\\trending\\route.ts",
+    "apps\\web\\app\\api\\quests\\progress\\route.ts",
+    "apps\\web\\app\\api\\quests\\route.ts"
+  ],
+  "missingPublish": [
+    "apps/web/app/api/bookings/route.ts",
+    "apps/web/app/api/bookings/[id]/confirm/route.ts",
+    "apps/web/app/api/bookings/[id]/cancel/route.ts",
+    "apps/web/app/api/calls/end/route.ts",
+    "apps/web/app/api/posts/create/route.ts",
+    "apps/web/app/api/chat/[id]/messages/route.ts",
+    "apps/web/app/api/wallet/webhooks/razorpay/route.ts",
+    "apps/web/app/api/wallet/webhooks/instamojo/route.ts",
+    "apps/web/app/api/notifications/route.ts"
+  ],
+  "timestamp": "2026-09-13T14:10:53.730Z"
+}

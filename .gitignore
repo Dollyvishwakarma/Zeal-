@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+
+# Build artifacts
+.next/
+.turbo/
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# Caches
+node_modules/.cache/
+.vercel/
+
+# Local backups
+.backups/
+
+# Env
+.env
+.env.local
+.env*.local
+.env.production
+.env*.production
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Generated
+zeal_full_repository_dump.txt
+*.tmp
+
+# Supabase
+.branches/
+.temp/
+.env.local.backup
+.env.vercel.required
+.env*.backup
+*.bak
+*.bak-*
+_archive/

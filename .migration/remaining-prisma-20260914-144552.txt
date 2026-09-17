@@ -1,0 +1,209 @@
+# Prisma migration report
+# Generated: 2026-09-14T09:16:35Z
+# Root:      /d/zeal
+
+## Files importing @prisma/client
+  (none)
+
+## Files calling prisma.*
+apps/admin/app/api/admin/ai-consultants/route.ts:9:    const items = await prisma.aIConsultant.findMany({
+apps/web/app/api/admin/ai-consultants/route.ts:12:  const items = await prisma.aIConsultant.findMany({
+apps/web/app/api/admin/bookings/route.ts:17:    prisma.booking.findMany({
+apps/web/app/api/admin/bookings/route.ts:27:    prisma.booking.count({ where }),
+apps/web/app/api/admin/bookings/[id]/route.ts:20:    const existing = await prisma.booking.findUnique({ where: { id } });
+apps/web/app/api/admin/bookings/[id]/route.ts:23:    const booking = await prisma.booking.update({
+apps/web/app/api/admin/consultants/route.ts:35:    prisma.consultant.findMany({
+apps/web/app/api/admin/consultants/route.ts:46:    prisma.consultant.count({ where }),
+apps/web/app/api/admin/consultants/route.ts:61:  const consultant = await prisma.consultant.findUnique({
+apps/web/app/api/admin/consultants/route.ts:79:  const updated = await prisma.consultant.update({
+apps/web/app/api/admin/consultants/[id]/stats/route.ts:11:    const consultant = await prisma.consultant.findUnique({
+apps/web/app/api/admin/consultants/[id]/stats/route.ts:20:      prisma.booking.count({ where: { consultantId: id } }),
+apps/web/app/api/admin/consultants/[id]/stats/route.ts:21:      prisma.callSession.count({ where: { consultantId: id } }),
+apps/web/app/api/admin/consultants/[id]/stats/route.ts:22:      prisma.transaction.aggregate({
+apps/web/app/api/admin/recordings/route.ts:8:  const items = await prisma.callSession.findMany({
+apps/web/app/api/admin/recordings/[id]/send/route.ts:13:    const session = await prisma.callSession.findUnique({
+apps/web/app/api/admin/users/route.ts:32:    prisma.user.findMany({
+apps/web/app/api/admin/users/route.ts:50:    prisma.user.count({ where }),
+apps/web/app/api/admin/users/route.ts:65:  const target = await prisma.user.findUnique({
+apps/web/app/api/admin/users/route.ts:83:  const user = await prisma.user.update({
+apps/web/app/api/admin/wallet/route.ts:8:  let wallet = await prisma.wallet.findUnique({ where: { userId: adminId } });
+apps/web/app/api/admin/wallet/route.ts:10:    wallet = await prisma.wallet.create({
+apps/web/app/api/admin/wallet/topup/route.ts:15:  let wallet = await prisma.wallet.findUnique({ where: { userId: adminId } });
+apps/web/app/api/admin/wallet/topup/route.ts:17:    wallet = await prisma.wallet.create({
+apps/web/app/api/admin/wallet/topup/route.ts:32:  const refreshed = await prisma.wallet.findUnique({ where: { id: wallet.id } });
+apps/web/app/api/admin/wallet/transactions/route.ts:11:  const wallet = await prisma.wallet.findUnique({ where: { userId: adminId } });
+apps/web/app/api/admin/wallet/transactions/route.ts:14:  const items = await prisma.transaction.findMany({
+apps/web/app/api/admin/withdrawals/route.ts:16:  const pending = await prisma.transaction.findMany({
+apps/web/app/api/admin/withdrawals/route.ts:43:  const tx = await prisma.transaction.findUnique({
+apps/web/app/api/ai/chat/end/route.ts:19:  const session = await prisma.callSession.findUnique({
+apps/web/app/api/ai/chat/message/route.ts:20:  const session = await prisma.callSession.findUnique({
+apps/web/app/api/ai/chat/start/route.ts:18:  const ai = await prisma.aIConsultant.findUnique({
+apps/web/app/api/ai/consultants/route.ts:25:    const consultants = await prisma.aIConsultant.findMany({
+apps/web/app/api/ai/consultants/[id]/route.ts:16:    const consultant = await prisma.aIConsultant.findUnique({ where: { id } });
+apps/web/app/api/auth/accept-invite/route.ts:40:    await prisma.user.upsert({
+apps/web/app/api/auth/sync-user/route.ts:29:  while (await prisma.user.findUnique({ where: { username: candidate }, select: { id: true } })) {
+apps/web/app/api/auth/sync-user/route.ts:34:  const existingConsultant = await prisma.consultant.findUnique({
+apps/web/app/api/auth/sync-user/route.ts:38:  const existingUser = await prisma.user.findUnique({
+apps/web/app/api/bazaar/listings/route.ts:15:  const consultants = await prisma.consultant.findMany({
+apps/web/app/api/bookings/availability/route.ts:21:  const consultant = await prisma.consultant.findUnique({
+apps/web/app/api/bookings/availability/route.ts:34:  const existingBookings = await prisma.booking.findMany({
+apps/web/app/api/bookings/route.ts:29:    const existing = await prisma.booking.findFirst({
+apps/web/app/api/bookings/route.ts:46:  const consultant = await prisma.consultant.findUnique({
+apps/web/app/api/bookings/route.ts:80:  const conflict = await prisma.$queryRaw<Array<{ id: string }>>`
+apps/web/app/api/bookings/route.ts:102:    wallet = await prisma.wallet.findUnique({ where: { userId } });
+apps/web/app/api/bookings/route.ts:152:      await prisma.booking.update({
+apps/web/app/api/bookings/route.ts:200:    prisma.booking.findMany({
+apps/web/app/api/bookings/route.ts:207:    prisma.booking.count({ where }),
+apps/web/app/api/bookings/[id]/confirm/route.ts:15:  const booking = await prisma.booking.findUnique({
+apps/web/app/api/bookings/[id]/confirm/route.ts:40:  const updated = await prisma.booking.update({
+apps/web/app/api/bookings/[id]/rate/route.ts:23:    const booking = await prisma.booking.findUnique({
+apps/web/app/api/bookings/[id]/rate/route.ts:33:    await prisma.$transaction([
+apps/web/app/api/bookings/[id]/rate/route.ts:34:      prisma.booking.update({
+apps/web/app/api/bookings/[id]/rate/route.ts:38:      prisma.consultant.update({
+apps/web/app/api/bookings/[id]/rate/route.ts:49:    const agg = await prisma.booking.aggregate({
+apps/web/app/api/bookings/[id]/rate/route.ts:54:      await prisma.consultant.update({
+apps/web/app/api/bookings/[id]/route.ts:14:    const booking = await prisma.booking.findFirst({
+apps/web/app/api/bookings/[id]/route.ts:45:    const booking = await prisma.booking.findFirst({
+apps/web/app/api/bookings/[id]/route.ts:57:    const updated = await prisma.booking.update({
+apps/web/app/api/calls/recording/route.ts:15:  const callSession = await prisma.callSession.findUnique({
+apps/web/app/api/calls/recording/route.ts:20:  await prisma.callSession.update({
+apps/web/app/api/calls/start/route.ts:19:  const booking = await prisma.booking.findUnique({
+apps/web/app/api/calls/token/route.ts:21:    const booking = await prisma.booking.findUnique({
+apps/web/app/api/calls/[id]/route.ts:14:    const session = await prisma.callSession.findUnique({
+apps/web/app/api/chat/conversations/route.ts:10:  const conversations = await prisma.$queryRaw<Array<{
+apps/web/app/api/chat/conversations/route.ts:26:    ? await prisma.user.findMany({
+apps/web/app/api/chat/conversations/route.ts:61:  const existing = await prisma.conversation.findFirst({
+apps/web/app/api/chat/conversations/route.ts:66:  const conversation = await prisma.conversation.create({
+apps/web/app/api/chat/[id]/messages/route.ts:18:    const conversation = await prisma.conversation.findUnique({ where: { id } });
+apps/web/app/api/chat/[id]/messages/route.ts:24:    const messages = await prisma.chatMessage.findMany({
+apps/web/app/api/chat/[id]/messages/route.ts:40:    const conversation = await prisma.conversation.findUnique({ where: { id } });
+apps/web/app/api/chat/[id]/messages/route.ts:49:    const message = await prisma.chatMessage.create({
+apps/web/app/api/chat/[id]/messages/route.ts:53:    await prisma.conversation.update({
+apps/web/app/api/chat/[id]/route.ts:12:    const conversation = await prisma.conversation.findUnique({ where: { id } });
+apps/web/app/api/chat/[id]/route.ts:19:    const otherUser = await prisma.user.findUnique({
+apps/web/app/api/consultant/availability/route.ts:23:  const consultant = await prisma.consultant.findUnique({
+apps/web/app/api/consultant/availability/route.ts:46:  const consultant = await prisma.consultant.findUnique({
+apps/web/app/api/consultant/availability/route.ts:54:  const updated = await prisma.consultant.update({
+apps/web/app/api/consultant/clients/route.ts:12:  const consultant = await prisma.consultant.findUnique({
+apps/web/app/api/consultant/clients/route.ts:31:  const bookings = await prisma.booking.findMany({
+apps/web/app/api/consultant/earnings/route.ts:12:  const wallet = await prisma.wallet.findUnique({ where: { userId } });
+apps/web/app/api/consultant/earnings/route.ts:22:    prisma.transaction.findMany({
+apps/web/app/api/consultant/earnings/route.ts:27:    prisma.transaction.groupBy({
+apps/web/app/api/consultant/earnings/route.ts:80:  const wallet = await prisma.wallet.findUnique({ where: { userId } });
+apps/web/app/api/consultant/earnings/route.ts:93:  const tx = await prisma.transaction.create({
+apps/web/app/api/consultant/earnings/route.ts:111:  await prisma.wallet.update({
+apps/web/app/api/consultant/onboarding/route.ts:41:  const existing = await prisma.consultant.findUnique({
+apps/web/app/api/consultant/onboarding/route.ts:58:  const user = await prisma.user.findUnique({
+apps/web/app/api/consultant/pulse/route.ts:12:  const consultant = await prisma.consultant.findUnique({
+apps/web/app/api/consultant/pulse/route.ts:35:      prisma.booking.findMany({
+apps/web/app/api/consultant/pulse/route.ts:47:      prisma.callSession.count({
+apps/web/app/api/consultant/pulse/route.ts:50:      prisma.booking.count({
+apps/web/app/api/consultant/pulse/route.ts:53:      prisma.transaction.aggregate({
+apps/web/app/api/consultant/pulse/route.ts:61:      prisma.notification.count({ where: { userId, read: false } }),
+apps/web/app/api/cron/reminders/route.ts:17:  const upcoming = await prisma.booking.findMany({
+apps/web/app/api/debug/logs/route.ts:11:    const logs = await prisma.$queryRaw`
+apps/web/app/api/explore/search/route.ts:16:    const consultants = await prisma.consultant.findMany({
+apps/web/app/api/explore/search/route.ts:50:    const posts = await prisma.post.findMany({
+apps/web/app/api/explore/trending/route.ts:6:  const groups = await prisma.consultant.groupBy({
+apps/web/app/api/health/route.ts:34:    await prisma.$queryRaw`SELECT 1`;
+apps/web/app/api/meetings/token/route.ts:15:  const booking = await prisma.booking.findUnique({
+apps/web/app/api/notifications/unread-count/route.ts:9:  const count = await prisma.notification.count({ where: { userId, read: false } });
+apps/web/app/api/posts/[id]/comments/route.ts:14:  const comments = await prisma.comment.findMany({
+apps/web/app/api/posts/[id]/comments/route.ts:37:  const post = await prisma.post.findUnique({ where: { id: postId }, select: { id: true } });
+apps/web/app/api/posts/[id]/comments/route.ts:40:  const comment = await prisma.comment.create({
+apps/web/app/api/posts/[id]/comments/route.ts:45:  await prisma.post.update({ where: { id: postId }, data: { commentCount: { increment: 1 } } });
+apps/web/app/api/posts/[id]/report/route.ts:21:    const post = await prisma.post.findUnique({ where: { id: postId }, select: { id: true } });
+apps/web/app/api/posts/[id]/report/route.ts:24:    await prisma.post.update({
+apps/web/app/api/posts/[id]/report/route.ts:31:      await prisma.notification.create({
+apps/web/app/api/posts/[id]/route.ts:7:  const post = await prisma.post.findUnique({
+apps/web/app/api/referral/[userId]/route.ts:17:      prisma.userActivity.count({
+apps/web/app/api/referral/[userId]/route.ts:20:      prisma.user.findUnique({
+apps/web/app/api/sparks/claim/route.ts:22:  const existing = await prisma.transaction.findFirst({
+apps/web/app/api/sparks/feed/route.ts:13:  const cheers = await prisma.cheer.findMany({
+apps/web/app/api/users/me/export/route.ts:12:      prisma.user.findUnique({
+apps/web/app/api/users/me/export/route.ts:19:      prisma.wallet.findUnique({ where: { userId } }),
+apps/web/app/api/users/me/export/route.ts:20:      prisma.transaction.findMany({
+apps/web/app/api/users/me/export/route.ts:25:      prisma.booking.findMany({
+apps/web/app/api/users/me/export/route.ts:30:      prisma.post.findMany({
+apps/web/app/api/users/me/export/route.ts:35:      prisma.notification.findMany({
+apps/web/app/api/users/me/export/route.ts:40:      prisma.consultant.findUnique({ where: { userId } }),
+apps/web/app/api/users/[id]/block/route.ts:13:    const exists = await prisma.userActivity.findFirst({
+apps/web/app/api/users/[id]/block/route.ts:17:      await prisma.userActivity.create({
+apps/web/app/api/users/[id]/block/route.ts:31:    await prisma.userActivity.deleteMany({
+apps/web/app/api/users/[id]/follow/route.ts:12:  const exists = await prisma.userActivity.findFirst({
+apps/web/app/api/users/[id]/follow/route.ts:16:    await prisma.userActivity.create({
+apps/web/app/api/users/[id]/follow/route.ts:28:  await prisma.userActivity.deleteMany({
+apps/web/app/api/users/[id]/posts/route.ts:9:    const posts = await prisma.post.findMany({
+apps/web/app/api/users/[id]/profile/route.ts:20:    const user = await prisma.user.findUnique({
+apps/web/app/api/users/[id]/profile/route.ts:54:      const wallet = await prisma.wallet.findUnique({
+apps/web/app/api/users/[id]/profile/route.ts:80:      const existing = await prisma.user.findUnique({
+apps/web/app/api/users/[id]/profile/route.ts:93:    const user = await prisma.user.update({
+apps/web/app/api/users/[id]/profile/route.ts:145:    await prisma.user.update({
+apps/web/app/api/wallet/topup/route.ts:19:  let wallet = await prisma.wallet.findUnique({ where: { userId } });
+apps/web/app/api/wallet/topup/route.ts:21:    wallet = await prisma.wallet.create({
+apps/web/app/api/wallet/topup/route.ts:44:  await prisma.transaction.create({
+apps/web/app/api/wallet/transactions/route.ts:16:  const wallet = await prisma.wallet.findUnique({ where: { userId } });
+apps/web/app/api/wallet/transactions/route.ts:23:    prisma.transaction.findMany({
+apps/web/app/api/wallet/transactions/route.ts:29:    prisma.transaction.count({ where }),
+apps/web/app/api/wallet/webhooks/instamojo/route.ts:58:    const pendingTx = await prisma.transaction.findFirst({
+apps/web/app/api/wallet/webhooks/instamojo/route.ts:87:    const wallet = await prisma.wallet.findUnique({
+apps/web/app/api/wallet/webhooks/razorpay/route.ts:73:    const pendingTx = await prisma.transaction.findFirst({
+apps/web/app/api/wallet/webhooks/razorpay/route.ts:97:    const wallet = await prisma.wallet.findUnique({
+apps/web/app/consultant/layout.tsx:19:  const user = await prisma.user.findUnique({
+apps/web/app/services/[category]/[service]/page.tsx:118:  const exactMatches = await prisma.consultant.findMany({
+apps/web/app/services/[category]/[service]/page.tsx:134:  return prisma.consultant.findMany({
+apps/web/app/services/[category]/[service]/page.tsx:153:  const matches = await prisma.aIConsultant.findMany({
+apps/web/app/services/[category]/[service]/page.tsx:165:  return prisma.aIConsultant.findMany({
+apps/web/app/white-label/[subdomain]/book/page.tsx:10:  const consultant = await prisma.consultant.findUnique({
+apps/web/app/white-label/[subdomain]/layout.tsx:34:  const consultant = await prisma.consultant.findUnique({
+apps/web/app/white-label/[subdomain]/page.tsx:9:  const consultant = await prisma.consultant.findUnique({
+apps/web/app/white-label/[subdomain]/services/page.tsx:9:  const consultant = await prisma.consultant.findUnique({ where: { subdomain } });
+apps/web/lib/auth/admin.ts:10:  const user = await prisma.user.findUnique({
+apps/web/lib/auth/admin.ts:29:    await prisma.notification.create({
+apps/web/lib/auth/rbac.ts:47:  const user = await prisma.user.findUnique({
+apps/web/lib/calls/billing.ts:38:    const payerWallet = await prisma.wallet.findUnique({
+apps/web/lib/calls/billing.ts:65:      const payeeWallet = await prisma.wallet.findUnique({
+apps/web/lib/notifications/service.ts:38:    const notif = await prisma.notification.create({
+apps/web/lib/notifications/service.ts:65:        const user = await prisma.user.findUnique({
+apps/web/lib/notifications/service.ts:92:    await prisma.notification.updateMany({
+apps/web/lib/notifications/service.ts:99:    await prisma.notification.updateMany({
+apps/web/lib/notifications/service.ts:113:      prisma.notification.findMany({
+apps/web/lib/notifications/service.ts:119:      prisma.notification.count({ where: { userId } }),
+apps/web/lib/notifications/service.ts:120:      prisma.notification.count({ where: { userId, read: false } }),
+apps/web/lib/notifications/service.ts:137:        const users = await prisma.user.findMany({
+apps/web/lib/notifications/service.ts:143:        const consultants = await prisma.consultant.findMany({
+apps/web/lib/notifications/service.ts:150:        const users = await prisma.user.findMany({
+apps/web/lib/wallet/ledger.ts:127:    const wallet = await prisma.wallet.findUnique({
+apps/web/lib/wallet/ledger.ts:155:      prisma.transaction.findMany({
+apps/web/lib/wallet/ledger.ts:161:      prisma.transaction.count({ where }),
+apps/web/lib/wallet/ledger.ts:172:    return prisma.transaction.findFirst({
+apps/web/lib/wallet/ledger.ts:179:    const wallet = await prisma.wallet.findUnique({ where: { id: walletId } });
+apps/web/lib/wallet/ledger.ts:182:    const transactions = await prisma.transaction.findMany({
+
+## Files using withTransaction
+apps/web/app/api/admin/withdrawals/route.ts:2:import { prisma, withTransaction } from "@zeal/database";
+apps/web/app/api/admin/withdrawals/route.ts:61:    await withTransaction(async (t) => {
+apps/web/app/api/admin/withdrawals/route.ts:75:    await withTransaction(async (t) => {
+apps/web/app/api/ai/chat/end/route.ts:3:import { prisma, withTransaction } from "@zeal/database";
+apps/web/app/api/ai/chat/end/route.ts:48:  const result = await withTransaction(async (tx) => {
+apps/web/app/api/ai/chat/start/route.ts:3:import { prisma, withTransaction } from "@zeal/database";
+apps/web/app/api/ai/chat/start/route.ts:31:  const session = await withTransaction(async (tx) => {
+apps/web/app/api/auth/sync-user/route.ts:2:import { prisma, withTransaction } from "@zeal/database";
+apps/web/app/api/auth/sync-user/route.ts:47:  const { user, wallet } = await withTransaction(async (tx) => {
+apps/web/app/api/bookings/route.ts:4:import { prisma, withTransaction } from "@zeal/database";
+apps/web/app/api/bookings/route.ts:112:  const booking = await withTransaction(async (tx) => {
+apps/web/app/api/calls/start/route.ts:3:import { prisma, withTransaction } from "@zeal/database";
+apps/web/app/api/calls/start/route.ts:41:  const callSession = await withTransaction(async (tx) => {
+apps/web/app/api/consultant/onboarding/route.ts:3:import { prisma, withTransaction, Prisma } from "@zeal/database";
+apps/web/app/api/consultant/onboarding/route.ts:70:  const consultant = await withTransaction(async (tx) => {
+apps/web/app/api/sparks/claim/route.ts:2:import { prisma, withTransaction } from "@zeal/database";
+apps/web/app/api/sparks/claim/route.ts:29:  const user = await withTransaction(async (tx) => {
+apps/web/app/api/users/me/delete/route.ts:2:import { prisma, withTransaction } from "@zeal/database";
+apps/web/app/api/users/me/delete/route.ts:17:  await withTransaction(async (tx) => {
+apps/web/lib/wallet/ledger.ts:28:import { prisma, withTransaction, TransactionType } from "@zeal/database";
+apps/web/lib/wallet/ledger.ts:54:    return withTransaction(
+
+## Files using Prisma.X namespace
+apps/web/app/api/consultant/onboarding/route.ts:67:  const availabilityJson = data.availability as unknown as Prisma.InputJsonValue;
+apps/web/app/api/consultant/onboarding/route.ts:68:  const docsJson = data.verificationDocs as unknown as Prisma.InputJsonValue;
+apps/web/lib/wallet/ledger.ts:18:        err instanceof Prisma.PrismaClientKnownRequestError &&
