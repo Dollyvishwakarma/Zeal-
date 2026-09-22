@@ -27,12 +27,10 @@ export interface AIResponse {
 }
 
 export async function runAI(req: AIRequest): Promise<AIResponse> {
-  // Build messages with prompt caching on the system prompt
   const messages: GroqMessage[] = [
     {
       role: "system",
       content: req.systemPrompt,
-      cache_control: { type: "ephemeral" },  // Saves 20-40% on reuse
     },
     { role: "user", content: req.userPrompt },
   ];
@@ -50,6 +48,7 @@ export async function runAI(req: AIRequest): Promise<AIResponse> {
     cached: false,
   };
 }
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // Legacy streaming helper — used by /api/ai/matchmaking, /api/ai/palmistry
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -59,7 +58,7 @@ export async function generateFaultTolerantStream(
 ): Promise<Response> {
   return streamGroq({
     messages: [
-      { role: "system", content: systemPrompt, cache_control: { type: "ephemeral" } },
+      { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },
     ],
     temperature: 0.7,

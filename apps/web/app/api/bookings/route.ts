@@ -7,22 +7,45 @@ export async function POST(req: Request) {
   try {
     const supabase = await createClient();
     const { data: { session } } = await supabase.auth.getSession();
-    
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const { consultantId, scheduledAt, durationMinutes, amount, platformFee } = body;
+    const { consultantId, scheduledAt, durationMinutes, consultationType, location } = body;
 
-    // 1. Verify wallet balance
+    if (!["CHAT", "PHYSICAL"].includes(consultationType)) {
+      return NextResponse.json({ error: "Only CHAT or PHYSICAL allowed" }, { status: 400 });
+    }
+
+    if (consultationType === "PHYSICAL" && !location?.trim()) {
+      return NextResponse.json({ error: "Location required for physical" }, { status: 400 });
+    }
+
+    const { data: consultant } = await supabase
+      .from("Consultant")
+      .select("perMinuteRate, chatRate, physicalRate, userId")
+      .eq("id", consultantId)
+      .maybeSingle();
+
+    if (!consultant) return NextResponse.json({ error: "Consultant not found" }, { status: 404 });
+
+    const rate = consultationType === "CHAT"
+      ? ((consultant as any).chatRate ?? (consultant as any).perMinuteRate ?? 50)
+      : ((consultant as any).physicalRate ?? (consultant as any).perMinuteRate ?? 50);
+
+    const amount = consultationType === "CHAT"
+      ? (durationMinutes / 60) * rate
+      : rate;
+
+    const platformFee = amount * 0.10;
+    const consultantEarning = amount - platformFee;
+
     const balance = await Ledger.getWalletBalance(session.user.id);
     if (balance < amount) {
-      return NextResponse.json({ error: "Insufficient wallet balance for this booking." }, { status: 400 });
+      return NextResponse.json({ error: "Insufficient balance" }, { status: 400 });
     }
 
     const bookingId = crypto.randomUUID();
-    const consultantEarning = amount - platformFee;
 
-    // 2. Create the Booking in DB (Bypass 'never[]' inference with 'as any')
     const { error: bookingError } = await supabase
       .from("Booking")
       .insert({
@@ -35,18 +58,17 @@ export async function POST(req: Request) {
         amount,
         platformFee,
         consultantEarning,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        consultationType,
+        location: consultationType === "PHYSICAL" ? location : null,
       } as any);
 
     if (bookingError) throw new Error(bookingError.message);
 
-    // 3. Move funds to Escrow using our RPC
     await Ledger.holdInEscrow(
       session.user.id,
       amount,
       bookingId,
-      `Prepaid consultation booking`
+      `${consultationType} booking`
     );
 
     return NextResponse.json({ success: true, bookingId });

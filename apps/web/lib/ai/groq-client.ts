@@ -4,7 +4,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Features (from research):
 //   • Exponential backoff with jitter on 429/5xx [reference:13]
-//   • Prompt caching via cache_control: ephemeral (saves 20-40%) [reference:14]
 //   • Model fallback: 70B → 8B-instant when rate limited [reference:15]
 //   • Retry-After header honored [reference:16]
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -14,7 +13,6 @@ const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 export interface GroqMessage {
   role: "system" | "user" | "assistant";
   content: string;
-  cache_control?: { type: "ephemeral" };
 }
 
 export interface GroqOptions {
@@ -69,8 +67,6 @@ export async function callGroq(options: GroqOptions): Promise<GroqResult> {
             messages: options.messages,
             temperature: options.temperature ?? 0.7,
             max_tokens: options.maxTokens ?? 1000,
-            // Enable prompt caching on the system message
-            // (saves 20-40% on context reuse — recommended by Groq docs)
           }),
         });
 

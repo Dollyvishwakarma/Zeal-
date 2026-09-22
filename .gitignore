@@ -48,3 +48,10 @@ zeal_full_repository_dump.txt
 *.bak
 *.bak-*
 _archive/
+
+# Local dumps and EOD reports
+dump_repo.ps1
+eod*.txt
+repo_dump.txt
+eod.txt
+eod2.txt

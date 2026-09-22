@@ -1,42 +1,19 @@
 // apps/web/lib/ai/index.ts
-// ═══════════════════════════════════════════════════════════════════════════════
-// ZEAL — Unified AI Module
-// ═══════════════════════════════════════════════════════════════════════════════
-// Single module replaces:
-//   • lib/ai/groq-client.ts        (kept for backward compat)
-//   • lib/ai/agnes-client.ts       (never created)
-//   • lib/ai/router.ts             (kept for backward compat)
-//
-// Public API:
-//   callAI(opts)      → Promise<Response>  (streaming or non-streaming)
-//   callAIJson(opts)  → Promise<string>    (convenience: extract text)
-//   withAICache(...)  → cached wrapper
-//
-// Fallback chain: Agnes → Groq Pro (70B) → Groq Fast (8B)
-// Each provider is retried twice with exponential backoff + jitter.
-// Honors Retry-After on 429.
-// ═══════════════════════════════════════════════════════════════════════════════
-
 import "server-only";
 import crypto from "crypto";
 import { redis } from "@/lib/cache";
 
 // ─── Provider config ────────────────────────────────────────────────────────
 const PROVIDERS = {
-  agnes: {
-    url: "https://apihub.agnes-ai.com/v1/chat/completions",
-    key: () => process.env.AGNES_API_KEY,
-    model: "agnes-2.5-flash",
-  },
   groqPro: {
     url: "https://api.groq.com/openai/v1/chat/completions",
     key: () => process.env.GROQ_API_KEY,
-    model: "llama-3.3-70b-versatile",
+    model: "openai/gpt-oss-120b",
   },
   groqFast: {
     url: "https://api.groq.com/openai/v1/chat/completions",
     key: () => process.env.GROQ_API_KEY,
-    model: "llama-3.1-8b-instant",
+    model: "openai/gpt-oss-120b",
   },
 } as const;
 
@@ -45,8 +22,6 @@ export type ProviderName = keyof typeof PROVIDERS;
 export interface AIMessage {
   role: "system" | "user" | "assistant";
   content: string;
-  /** Prompt caching hint (Groq / OpenAI-compatible). */
-  cache_control?: { type: "ephemeral" };
 }
 
 export interface CallAIOptions {
@@ -95,7 +70,7 @@ async function callProvider(
 }
 
 // ─── Main call with fallback chain ──────────────────────────────────────────
-const FALLBACK_CHAIN: ProviderName[] = ["agnes", "groqPro", "groqFast"];
+const FALLBACK_CHAIN: ProviderName[] = ["groqPro", "groqFast"];
 
 export async function callAI(opts: CallAIOptions): Promise<Response> {
   const chain: ProviderName[] = opts.preferProvider
@@ -116,7 +91,7 @@ export async function callAI(opts: CallAIOptions): Promise<Response> {
           const delay = retryAfter > 0 ? retryAfter * 1000 : backoffDelay(attempt);
           console.warn(`[ai] ${provider} 429 — waiting ${delay}ms`);
           if (attempt < maxRetries) { await sleep(delay); continue; }
-          break; // move to next provider
+          break;
         }
 
         if (res.status >= 500) {
@@ -125,12 +100,13 @@ export async function callAI(opts: CallAIOptions): Promise<Response> {
           break;
         }
 
-        // 4xx (except 429) — not retryable, but try next provider anyway
         const text = await res.text().catch(() => "");
         lastErr = new Error(`${provider} ${res.status}: ${text.slice(0, 200)}`);
+        console.error(`[ai] ${provider} failed with ${res.status}:`, text.slice(0, 300));
         break;
       } catch (err) {
         lastErr = err instanceof Error ? err : new Error(String(err));
+        console.error(`[ai] ${provider} threw:`, lastErr.message);
         if (attempt < maxRetries) { await sleep(backoffDelay(attempt)); continue; }
       }
     }

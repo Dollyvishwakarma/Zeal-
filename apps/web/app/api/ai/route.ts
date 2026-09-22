@@ -2,10 +2,6 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // ZEAL — Unified AI Endpoint
 // ═══════════════════════════════════════════════════════════════════════════════
-// One route handles every AI task via ?task=<name>.
-// Replaces: /api/ai/search, /api/ai/horoscope, /api/ai/tarot, /api/ai/numerology
-// Uses: lib/ai (callAI, callAIJson, withAICache) + lib/rate-limit (tiered)
-// ═══════════════════════════════════════════════════════════════════════════════
 
 import { NextResponse } from "next/server";
 import { createServerClientFromCookies, createAdminClient } from "@zeal/database/server";
@@ -16,9 +12,7 @@ import { CATEGORY_ID_TO_NAME } from "@/lib/services/slug";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-// ─── Task type ──────────────────────────────────────────────────────────────
 type TaskName = "search" | "horoscope" | "tarot" | "numerology" | "chat" | "assist";
-
 const STRICT_TASKS: TaskName[] = ["search"];
 
 interface TaskCtx {
@@ -27,9 +21,7 @@ interface TaskCtx {
   supabase: any;
 }
 
-// ─── Handlers ───────────────────────────────────────────────────────────────
 const HANDLERS: Record<TaskName, (ctx: TaskCtx) => Promise<any>> = {
-  // ─── SEARCH: classify query → category + top consultants ──────────────────
   search: async ({ body }) => {
     const query = String(body?.query ?? "").trim();
     if (query.length < 3) throw new Error("Query too short");
@@ -67,11 +59,8 @@ const HANDLERS: Record<TaskName, (ctx: TaskCtx) => Promise<any>> = {
             ? parsed.categoryId
             : "wellness";
 
-        // Query matching consultants
         const admin = createAdminClient();
-        const prismaCategory = categoryId
-          .toUpperCase()
-          .replace(/-/g, "_");
+        const prismaCategory = categoryId.toUpperCase().replace(/-/g, "_");
 
         const { data: consultants } = await admin
           .from("Consultant")
@@ -102,7 +91,6 @@ const HANDLERS: Record<TaskName, (ctx: TaskCtx) => Promise<any>> = {
     return { ...value, cached };
   },
 
-  // ─── HOROSCOPE ────────────────────────────────────────────────────────────
   horoscope: async ({ body }) => {
     const sign = String(body?.sign ?? "").trim();
     if (!sign) throw new Error("Sign required");
@@ -118,7 +106,6 @@ const HANDLERS: Record<TaskName, (ctx: TaskCtx) => Promise<any>> = {
             {
               role: "system",
               content: "You are an expert Vedic astrologer. Provide specific, practical daily horoscopes. Avoid generic fortune-teller clichés.",
-              cache_control: { type: "ephemeral" },
             },
             { role: "user", content: `Daily horoscope for ${sign} on ${today}. Career, relationships, health. Under 180 words.` },
           ],
@@ -131,7 +118,6 @@ const HANDLERS: Record<TaskName, (ctx: TaskCtx) => Promise<any>> = {
     return { sign, ...value, cached };
   },
 
-  // ─── TAROT ────────────────────────────────────────────────────────────────
   tarot: async ({ body }) => {
     const cards: string[] = Array.isArray(body?.cards) ? body.cards : [];
     if (cards.length !== 3) throw new Error("Exactly 3 cards required");
@@ -146,7 +132,6 @@ const HANDLERS: Record<TaskName, (ctx: TaskCtx) => Promise<any>> = {
             {
               role: "system",
               content: "You are an expert Tarot reader using Rider-Waite symbolism. Provide grounded, actionable interpretations.",
-              cache_control: { type: "ephemeral" },
             },
             { role: "user", content: `3-card spread (Past, Present, Future):\n1. ${cards[0]}\n2. ${cards[1]}\n3. ${cards[2]}\n\nSynthesize the combined narrative.` },
           ],
@@ -159,7 +144,6 @@ const HANDLERS: Record<TaskName, (ctx: TaskCtx) => Promise<any>> = {
     return { cards, ...value, cached };
   },
 
-  // ─── NUMEROLOGY ───────────────────────────────────────────────────────────
   numerology: async ({ body }) => {
     const fullName = String(body?.fullName ?? "").trim();
     const dob = String(body?.dob ?? "").trim();
@@ -175,7 +159,6 @@ const HANDLERS: Record<TaskName, (ctx: TaskCtx) => Promise<any>> = {
             {
               role: "system",
               content: "You are a master numerologist. Calculate Life Path, Destiny, Soul Urge accurately. Provide grounded readings.",
-              cache_control: { type: "ephemeral" },
             },
             { role: "user", content: `Full numerology profile for ${fullName}, born ${dob}.` },
           ],
@@ -188,7 +171,6 @@ const HANDLERS: Record<TaskName, (ctx: TaskCtx) => Promise<any>> = {
     return { fullName, dob, ...value, cached };
   },
 
-  // ─── CHAT (non-streaming fallback) ────────────────────────────────────────
   chat: async ({ body }) => {
     const prompt = String(body?.prompt ?? "").trim();
     if (!prompt) throw new Error("Prompt required");
@@ -204,7 +186,6 @@ const HANDLERS: Record<TaskName, (ctx: TaskCtx) => Promise<any>> = {
     return { reply };
   },
 
-  // ─── ASSIST (consultant reply suggestions) ────────────────────────────────
   assist: async ({ body }) => {
     const query = String(body?.query ?? "").trim();
     if (!query) throw new Error("Query required");
@@ -237,7 +218,6 @@ const HANDLERS: Record<TaskName, (ctx: TaskCtx) => Promise<any>> = {
   },
 };
 
-// ─── Route handler ──────────────────────────────────────────────────────────
 export async function POST(req: Request) {
   try {
     const url = new URL(req.url);
@@ -247,11 +227,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: `Unknown task: ${task}` }, { status: 400 });
     }
 
-    // 1. Auth
     const supabase = await createServerClientFromCookies();
     const { data: { user } } = await supabase.auth.getUser();
 
-    // 2. Rate limit (tiered)
     const limiter = STRICT_TASKS.includes(task) ? aiStrictLimiter : aiRateLimiter;
     const identifier = user
       ? `ai:${task}:${user.id}`
@@ -264,11 +242,9 @@ export async function POST(req: Request) {
       );
     }
 
-    // 3. Parse body
     let body: any;
     try { body = await req.json(); } catch { body = {}; }
 
-    // 4. Execute handler
     const result = await HANDLERS[task]({ body, userId: user?.id ?? null, supabase });
 
     return NextResponse.json(
