@@ -1,50 +1,54 @@
 // apps/web/middleware.ts
 // ═══════════════════════════════════════════════════════════════════════════════
-// ZEAL WEB — Middleware
-//   • Refreshes Supabase session cookie
-//   • Bearer-authed /api/* requests skip middleware (handled by api-guard)
-//   • Route guards for consultant + admin prefixes
+// ZEAL WEB — Simple Middleware (DB-based role check, no JWT)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 const PUBLIC_ROUTES = [
-  "/", "/explore", "/services", "/ai-astrologers", "/consultant", "/white-label",
-  "/zeal", "/login", "/register", "/auth/callback", "/auth/verify-invite",
-  "/payment/success", "/payment/failure", "/not-found",
+  "/",
+  "/explore",
+  "/services",
+  "/ai-astrologers",
+  "/consultant",
+  "/login",
+  "/register",
+  "/auth/callback",
+  "/payment",
 ];
-const AUTH_REQUIRED_PREFIXES = [
-  "/chat", "/wallet", "/bookings", "/booking", "/profile",
-  "/notifications", "/sparks", "/create", "/post", "/debug", "/session",
+
+const USER_ONLY = [
+  "/chat",
+  "/wallet",
+  "/bookings",
+  "/booking",
+  "/profile",
+  "/notifications",
+  "/sparks",
+  "/create",
 ];
-const CONSULTANT_REQUIRED_PREFIXES = [
-  "/consultant/dashboard", "/consultant/bookings", "/consultant/clients",
-  "/consultant/earnings", "/consultant/availability", "/consultant/settings",
-  "/consultant/onboarding", "/consultant/pending",
+
+const CONSULTANT_ONLY = [
+  "/consultant/dashboard",
+  "/consultant/bookings",
+  "/consultant/clients",
+  "/consultant/earnings",
+  "/consultant/availability",
+  "/consultant/settings",
+  "/consultant/onboarding",
 ];
-const ADMIN_REQUIRED_PREFIXES = ["/admin"];
+
+const ADMIN_ONLY = ["/admin"];
 
 const isPublic = (p: string) =>
   p === "/" || PUBLIC_ROUTES.some((r) => p === r || p.startsWith(r + "/"));
-const requiresAuth = (p: string) =>
-  AUTH_REQUIRED_PREFIXES.some((r) => p === r || p.startsWith(r + "/"));
-const requiresConsultant = (p: string) =>
-  CONSULTANT_REQUIRED_PREFIXES.some((r) => p === r || p.startsWith(r + "/"));
-const requiresAdmin = (p: string) =>
-  ADMIN_REQUIRED_PREFIXES.some((r) => p === r || p.startsWith(r + "/"));
+
+const matches = (p: string, prefixes: string[]) =>
+  prefixes.some((r) => p === r || p.startsWith(r + "/"));
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-
-  // ─── Bearer-authed API requests bypass middleware ─────────────────────
-  // These come from the admin app proxy. The api-guard verifies the token.
-  if (
-    pathname.startsWith("/api/") &&
-    request.headers.get("authorization")?.startsWith("Bearer ")
-  ) {
-    return NextResponse.next();
-  }
 
   let response = NextResponse.next({ request });
 
@@ -73,38 +77,47 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // ─── Public routes: always allow ──────────────────────────────────────────
   if (isPublic(pathname)) return response;
 
-  if (requiresAuth(pathname) && !user) {
+  // ─── Not logged in: redirect to login ─────────────────────────────────────
+  const needsAuth =
+    matches(pathname, USER_ONLY) ||
+    matches(pathname, CONSULTANT_ONLY) ||
+    matches(pathname, ADMIN_ONLY);
+
+  if (!user && needsAuth) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("redirectedFrom", pathname);
     return NextResponse.redirect(url);
   }
 
+  // ─── Role-based checks (DB query, no JWT parsing) ─────────────────────────
   if (user) {
-    const rawRole = (user.app_metadata?.role as string | undefined) ?? "USER";
-    const role = rawRole.length > 0 ? rawRole : "USER";
+    const { data: profile } = await supabase
+      .from("User")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
 
-    if (requiresConsultant(pathname)) {
-      const ok =
-        role === "CLIENT_ADMIN" || role === "ADMIN" || role === "SUPER_ADMIN";
-      if (!ok) {
-        const url = request.nextUrl.clone();
-        url.pathname = "/dashboard";
-        return NextResponse.redirect(url);
-      }
+    const role = (profile as { role?: string } | null)?.role || "USER";
+
+    const isAdmin = ["SUPER_ADMIN", "ADMIN"].includes(role);
+    const isConsultant = ["CLIENT_ADMIN", "SUPPORT"].includes(role);
+
+    // Admin routes: only admins
+    if (matches(pathname, ADMIN_ONLY) && !isAdmin) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/explore";
+      return NextResponse.redirect(url);
     }
 
-    if (requiresAdmin(pathname)) {
-      const ok =
-        role === "ADMIN" || role === "SUPER_ADMIN" ||
-        role === "SUPPORT" || role === "VIEWER";
-      if (!ok) {
-        const url = request.nextUrl.clone();
-        url.pathname = "/dashboard";
-        return NextResponse.redirect(url);
-      }
+    // Consultant routes: consultants + admins
+    if (matches(pathname, CONSULTANT_ONLY) && !isConsultant && !isAdmin) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/explore";
+      return NextResponse.redirect(url);
     }
   }
 

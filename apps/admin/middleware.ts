@@ -1,22 +1,16 @@
 // apps/admin/middleware.ts
 // ═══════════════════════════════════════════════════════════════════════════════
-// ZEAL ADMIN — Middleware
-//   • Refreshes admin Supabase session
-//   • Injects Authorization: Bearer <token> on /api/* requests before proxy
-//   • Route guard for the admin portal (admin roles only)
+// ZEAL ADMIN — Simple Middleware (DB-based role check, no JWT)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-const PUBLIC_ROUTES = ["/login", "/auth/callback", "/not-found"];
+const PUBLIC_ROUTES = ["/login", "/not-found"];
 const ADMIN_ROLES = ["SUPER_ADMIN", "ADMIN", "SUPPORT", "VIEWER"];
 
-function isPublic(pathname: string): boolean {
-  return PUBLIC_ROUTES.some((p) => pathname === p || pathname.startsWith(p + "/"));
-}
-
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -41,38 +35,31 @@ export async function middleware(request: NextRequest) {
   );
 
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  const { pathname } = request.nextUrl;
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  // ─── API proxy: attach admin's access token ────────────────────────────
-  if (pathname.startsWith("/api/")) {
-    if (session?.access_token) {
-      const requestHeaders = new Headers(request.headers);
-      requestHeaders.set("Authorization", `Bearer ${session.access_token}`);
-      requestHeaders.set("X-Admin-Proxy", "1");
-
-      const apiResponse = NextResponse.next({
-        request: { headers: requestHeaders },
-      });
-
-      response.cookies.getAll().forEach((c) => apiResponse.cookies.set(c));
-      return apiResponse;
-    }
+  // ─── Public routes: allow ─────────────────────────────────────────────────
+  if (PUBLIC_ROUTES.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
     return response;
   }
 
-  // ─── Page routes ───────────────────────────────────────────────────────
-  if (isPublic(pathname)) return response;
-
-  if (!session) {
+  // ─── Not logged in → login ────────────────────────────────────────────────
+  if (!user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("redirectedFrom", pathname);
     return NextResponse.redirect(url);
   }
 
-  const role = (session.user.app_metadata?.role as string | undefined) ?? "USER";
+  // ─── Role check from DB (no JWT) ──────────────────────────────────────────
+  const { data: profile } = await supabase
+    .from("User")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const role = (profile as { role?: string } | null)?.role || "USER";
+
   if (!ADMIN_ROLES.includes(role)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
@@ -85,6 +72,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|api/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };

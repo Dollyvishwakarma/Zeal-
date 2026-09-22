@@ -1,13 +1,4 @@
 // apps/web/lib/ai/groq-client.ts
-// ═══════════════════════════════════════════════════════════════════════════════
-// ZEAL — Resilient Groq Client
-// ─────────────────────────────────────────────────────────────────────────────
-// Features (from research):
-//   • Exponential backoff with jitter on 429/5xx [reference:13]
-//   • Model fallback: 70B → 8B-instant when rate limited [reference:15]
-//   • Retry-After header honored [reference:16]
-// ═══════════════════════════════════════════════════════════════════════════════
-
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 export interface GroqMessage {
@@ -17,10 +8,9 @@ export interface GroqMessage {
 
 export interface GroqOptions {
   messages: GroqMessage[];
-  model?: "llama-3.3-70b-versatile" | "llama-3.1-8b-instant";
+  model?: "openai/gpt-oss-120b" | "llama-3.1-8b-instant" | "llama-3.3-70b-versatile";
   temperature?: number;
   maxTokens?: number;
-  /** Retry budget for 429 responses */
   maxRetries?: number;
 }
 
@@ -31,24 +21,48 @@ export interface GroqResult {
   cached: boolean;
 }
 
-// ─── Sleep helper ────────────────────────────────────────────────────────────
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-// ─── Exponential backoff with decorrelated jitter ────────────────────────────
 function backoffDelay(attempt: number, baseMs = 500): number {
   const cap = Math.min(baseMs * Math.pow(2, attempt), 30_000);
   const jitter = cap * 0.3 * (Math.random() * 2 - 1);
   return Math.max(100, Math.round(cap + jitter));
 }
 
-// ─── Main call ───────────────────────────────────────────────────────────────
+// ─── Extract content from Groq response (handles gpt-oss structure) ────────
+function extractContent(data: any): string {
+  const choice = data?.choices?.[0];
+  if (!choice) return "";
+
+  // Standard path
+  let content = choice?.message?.content;
+
+  // gpt-oss-120b: content might be in different fields
+  if (!content || content.trim() === "") {
+    content =
+      choice?.message?.reasoning ||
+      choice?.text ||
+      choice?.delta?.content ||
+      "";
+  }
+
+  // If content is an array (some models), join it
+  if (Array.isArray(content)) {
+    content = content
+      .map((c: any) => (typeof c === "string" ? c : c?.text ?? ""))
+      .join("");
+  }
+
+  return typeof content === "string" ? content.trim() : "";
+}
+
 export async function callGroq(options: GroqOptions): Promise<GroqResult> {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) throw new Error("GROQ_API_KEY missing");
 
   const models: Array<NonNullable<GroqOptions["model"]>> = options.model
     ? [options.model]
-    : ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
+    : ["openai/gpt-oss-120b", "llama-3.1-8b-instant"];
 
   const maxRetries = options.maxRetries ?? 2;
   let lastError: Error | null = null;
@@ -56,6 +70,11 @@ export async function callGroq(options: GroqOptions): Promise<GroqResult> {
   for (const model of models) {
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
+        const cleanMessages = options.messages.map((m) => ({
+          role: m.role,
+          content: m.content,
+        }));
+
         const res = await fetch(GROQ_URL, {
           method: "POST",
           headers: {
@@ -64,31 +83,22 @@ export async function callGroq(options: GroqOptions): Promise<GroqResult> {
           },
           body: JSON.stringify({
             model,
-            messages: options.messages,
+            messages: cleanMessages,
             temperature: options.temperature ?? 0.7,
-            max_tokens: options.maxTokens ?? 1000,
+            max_tokens: options.maxTokens ?? 1500,
           }),
         });
 
-        // ─── 429: honor Retry-After, then backoff ─────────────────────────
         if (res.status === 429) {
           const retryAfter = Number(res.headers.get("retry-after")) || 0;
           const delayMs = retryAfter > 0 ? retryAfter * 1000 : backoffDelay(attempt);
           console.warn(`[Groq] 429 on ${model} — waiting ${delayMs}ms`);
-          if (attempt < maxRetries) {
-            await sleep(delayMs);
-            continue;
-          }
-          // Move to next model
+          if (attempt < maxRetries) { await sleep(delayMs); continue; }
           break;
         }
 
-        // ─── 5xx: retry with backoff ──────────────────────────────────────
         if (res.status >= 500) {
-          if (attempt < maxRetries) {
-            await sleep(backoffDelay(attempt));
-            continue;
-          }
+          if (attempt < maxRetries) { await sleep(backoffDelay(attempt)); continue; }
           lastError = new Error(`Groq ${res.status}: ${res.statusText}`);
           break;
         }
@@ -99,8 +109,15 @@ export async function callGroq(options: GroqOptions): Promise<GroqResult> {
         }
 
         const data = await res.json();
-        const content = data?.choices?.[0]?.message?.content;
-        if (!content) throw new Error("Groq: empty response");
+
+        // Debug: log full response structure if content empty
+        const content = extractContent(data);
+        if (!content) {
+          console.warn(`[Groq] Empty content from ${model}. Full response:`, JSON.stringify(data).slice(0, 500));
+          if (attempt < maxRetries) { await sleep(backoffDelay(attempt)); continue; }
+          lastError = new Error(`Groq ${model}: empty content`);
+          break;
+        }
 
         return {
           content,
@@ -110,10 +127,8 @@ export async function callGroq(options: GroqOptions): Promise<GroqResult> {
         };
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err));
-        if (attempt < maxRetries) {
-          await sleep(backoffDelay(attempt));
-          continue;
-        }
+        console.error(`[Groq] ${model} error:`, lastError.message);
+        if (attempt < maxRetries) { await sleep(backoffDelay(attempt)); continue; }
       }
     }
   }
@@ -121,10 +136,14 @@ export async function callGroq(options: GroqOptions): Promise<GroqResult> {
   throw lastError ?? new Error("Groq: all attempts failed");
 }
 
-// ─── Streaming variant (for chat use cases) ──────────────────────────────────
 export async function streamGroq(options: GroqOptions): Promise<Response> {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) throw new Error("GROQ_API_KEY missing");
+
+  const cleanMessages = options.messages.map((m) => ({
+    role: m.role,
+    content: m.content,
+  }));
 
   const res = await fetch(GROQ_URL, {
     method: "POST",
@@ -133,10 +152,10 @@ export async function streamGroq(options: GroqOptions): Promise<Response> {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: options.model ?? "llama-3.3-70b-versatile",
-      messages: options.messages,
+      model: options.model ?? "openai/gpt-oss-120b",
+      messages: cleanMessages,
       temperature: options.temperature ?? 0.7,
-      max_tokens: options.maxTokens ?? 1000,
+      max_tokens: options.maxTokens ?? 1500,
       stream: true,
     }),
   });

@@ -1,53 +1,63 @@
+// apps/web/lib/auth/server.ts
+// ═══════════════════════════════════════════════════════════════════════════════
+// ZEAL — Simple Auth (no JWT, Supabase session-based)
+// ═══════════════════════════════════════════════════════════════════════════════
+
 import { createClient } from "@zeal/database/server";
 
-/**
- * Returns the authenticated user's ID, or null. Never throws.
- */
+// ─── Get current user ID ────────────────────────────────────────────────────
 export async function getUserId(): Promise<string | null> {
   try {
     const supabase = await createClient();
     if (!supabase) return null;
-    const { data: { user }, error } = await supabase.auth.getUser();
-    if (error) return null;
+    const { data: { user } } = await supabase.auth.getUser();
     return user?.id ?? null;
-  } catch (err) {
-    if (err instanceof Error && err.message.includes("Dynamic server usage")) return null;
-    if (process.env.NODE_ENV === "development") console.warn("[getUserId] Unexpected error:", err);
+  } catch {
     return null;
   }
 }
 
-/**
- * Full session (user + session object). Never throws.
- */
+// ─── Get full session ───────────────────────────────────────────────────────
 export async function getServerSession() {
   try {
     const supabase = await createClient();
     if (!supabase) return { user: null, session: null };
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error) return { user: null, session: null };
+    const { data: { session } } = await supabase.auth.getSession();
     return { user: session?.user ?? null, session: session ?? null };
-  } catch (err) {
-    if (err instanceof Error && err.message.includes("Dynamic server usage")) {
-      return { user: null, session: null };
-    }
-    if (process.env.NODE_ENV === "development") console.warn("[getServerSession] Unexpected error:", err);
+  } catch {
     return { user: null, session: null };
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// AUTH SYNC — idempotent, safe to call from signup, login, OAuth, admin login
-// ═══════════════════════════════════════════════════════════════════════════════
+// ─── Simple role check (no JWT) ─────────────────────────────────────────────
+export type AuthRole = "USER" | "CONSULTANT" | "ADMIN" | "SUPER_ADMIN";
 
-export type AuthRole =
-  | "USER"
-  | "CLIENT_ADMIN"
-  | "SUPPORT"
-  | "ADMIN"
-  | "SUPER_ADMIN"
-  | "VIEWER";
+export async function getCurrentUserRole(): Promise<AuthRole | null> {
+  try {
+    const supabase = await createClient();
+    if (!supabase) return null;
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    // Check User table directly (simple DB query, no JWT parsing)
+    const { data: profile } = await supabase
+      .from("User")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const dbRole = (profile as { role?: string } | null)?.role;
+
+    if (dbRole === "SUPER_ADMIN" || dbRole === "ADMIN") return "ADMIN";
+    if (dbRole === "CLIENT_ADMIN" || dbRole === "SUPPORT") return "CONSULTANT";
+    return "USER";
+  } catch {
+    return null;
+  }
+}
+
+// ─── Sync auth user (idempotent) ────────────────────────────────────────────
 export interface SyncResult {
   ok: boolean;
   role: AuthRole;
@@ -56,96 +66,73 @@ export interface SyncResult {
   error?: string;
 }
 
-function destinationFor(role: AuthRole): string {
-  if (role === "SUPER_ADMIN" || role === "ADMIN" || role === "SUPPORT" || role === "VIEWER") {
-    return "/admin";
-  }
-  if (role === "CLIENT_ADMIN") return "/consultant/dashboard";
-  return "/explore";
-}
-
 export async function syncAuthUser(): Promise<SyncResult> {
   try {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!url || !serviceKey) {
-      return { ok: false, role: "USER", isNew: false, redirectTo: "/login", error: "Supabase admin env not configured" };
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { ok: false, role: "USER", isNew: false, redirectTo: "/login" };
     }
 
-    const { createServerClientFromCookies } = await import("@zeal/database/server");
-    const userClient = await createServerClientFromCookies();
-    const { data: { user }, error: authErr } = await userClient.auth.getUser();
-    if (authErr || !user) {
-      return { ok: false, role: "USER", isNew: false, redirectTo: "/login", error: "Unauthorized" };
-    }
+    // Check if user exists
+    const { data: existing } = await supabase
+      .from("User")
+      .select("id, role")
+      .eq("id", user.id)
+      .maybeSingle();
 
-    const { createClient: createSupabaseClient } = await import("@supabase/supabase-js");
-    const admin = createSupabaseClient(url, serviceKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
-
-    const email = user.email ?? "";
-    const username =
-      (user.user_metadata?.username as string | undefined) ||
-      email.split("@")[0] ||
-      `user_${user.id.slice(0, 8)}`;
-    const name =
-      (user.user_metadata?.full_name as string | undefined) ||
-      (user.user_metadata?.name as string | undefined) ||
-      null;
-    const avatar = (user.user_metadata?.avatar_url as string | undefined) ?? null;
-
-    const { data: existingUser } = await admin
-      .from("User").select("id, role").eq("id", user.id).maybeSingle();
-
-    let isNew = false;
     let role: AuthRole = "USER";
+    let isNew = false;
 
-    if (!existingUser) {
+    if (!existing) {
+      // Create new user
       isNew = true;
-      const { data, error } = await admin
-        .from("User")
-        .insert({
-          id: user.id, email, username, name, avatar,
-          role: "USER", sparks: 0, isVerified: false, is_online: false,
-        })
-        .select("role").single();
-      if (error) {
-        return { ok: false, role: "USER", isNew: false, redirectTo: "/login", error: error.message };
-      }
-      role = (data?.role as AuthRole) ?? "USER";
-    } else {
-      await admin.from("User").update({
-        email: email || undefined,
-        name: name ?? undefined,
-        avatar: avatar ?? undefined,
-      }).eq("id", user.id);
-      role = (existingUser.role as AuthRole) ?? "USER";
-    }
+      const username =
+        user.email?.split("@")[0] || `user_${user.id.slice(0, 8)}`;
 
-    const { data: existingWallet } = await admin
-      .from("Wallet").select("id").eq("userId", user.id).maybeSingle();
-    if (!existingWallet) {
-      await admin.from("Wallet").insert({
-        userId: user.id, balance: 0, escrow: 0, pendingIn: 0, pendingOut: 0, blocked: 0,
+      await supabase.from("User").insert({
+        id: user.id,
+        email: user.email || "",
+        username,
+        name: user.user_metadata?.full_name || null,
+        avatar: user.user_metadata?.avatar_url || null,
+        role: "USER",
       });
+    } else {
+      const dbRole = (existing as { role?: string }).role;
+      if (dbRole === "SUPER_ADMIN" || dbRole === "ADMIN") role = "ADMIN";
+      else if (dbRole === "CLIENT_ADMIN" || dbRole === "SUPPORT")
+        role = "CONSULTANT";
     }
 
-    const metaRole = (user.app_metadata?.role as string | undefined) ?? "";
-    if (metaRole !== role) {
-      try {
-        await admin.auth.admin.updateUserById(user.id, {
-          app_metadata: { ...(user.app_metadata ?? {}), role },
-        });
-      } catch (syncErr) {
-        console.warn("[syncAuthUser] app_metadata sync failed:", syncErr);
-      }
+    // Ensure wallet exists
+    const { data: wallet } = await supabase
+      .from("Wallet")
+      .select("id")
+      .eq("userId", user.id)
+      .maybeSingle();
+
+    if (!wallet) {
+      await supabase.from("Wallet").insert({ userId: user.id, balance: 0 });
     }
 
-    return { ok: true, role, isNew, redirectTo: destinationFor(role) };
+    // Decide redirect destination based on role
+    const redirectTo =
+      role === "ADMIN"
+        ? "/admin"
+        : role === "CONSULTANT"
+        ? "/consultant/dashboard"
+        : "/explore";
+
+    return { ok: true, role, isNew, redirectTo };
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "sync failed";
-    if (process.env.NODE_ENV === "development") console.warn("[syncAuthUser] unexpected:", err);
-    return { ok: false, role: "USER", isNew: false, redirectTo: "/login", error: msg };
+    return {
+      ok: false,
+      role: "USER",
+      isNew: false,
+      redirectTo: "/login",
+      error: err instanceof Error ? err.message : "sync failed",
+    };
   }
 }
