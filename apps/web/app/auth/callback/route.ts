@@ -41,17 +41,18 @@ export async function GET(request: Request) {
   }
 
   const sync = await syncAuthUser();
+  const role = sync.role as string;  // 👈 Yeh line add ki
 
-  if (intent === "consultant" && sync.role === "USER") {
+  if (intent === "consultant" && role === "USER") {
     return NextResponse.redirect(`${origin}/apply`);
   }
   if (
-    sync.role === "SUPER_ADMIN" || sync.role === "ADMIN" ||
-    sync.role === "SUPPORT" || sync.role === "VIEWER"
+    role === "SUPER_ADMIN" || role === "ADMIN" ||
+    role === "SUPPORT" || role === "VIEWER"
   ) {
     return NextResponse.redirect(`${origin}/admin`);
   }
-  if (sync.role === "CLIENT_ADMIN") {
+  if (role === "CLIENT_ADMIN") {
     return NextResponse.redirect(`${origin}/consultant/dashboard`);
   }
 

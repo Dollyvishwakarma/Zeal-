@@ -1,9 +1,5 @@
 "use client";
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// Web Supabase Auth Provider (SSR-safe)
-// ═══════════════════════════════════════════════════════════════════════════════
-
 import { createContext, useContext, useEffect, useState } from "react";
 import type { User, Session, AuthChangeEvent } from "@supabase/supabase-js";
 import { createClient } from "@zeal/database";
