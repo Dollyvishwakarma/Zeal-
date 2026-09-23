@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { GlobalCallListener } from "@/components/global/GlobalCallListener";
 import { AppLayout, Profile } from "@/components/navigation/AppLayout";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,29 +24,27 @@ export default async function RootLayout({
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     { cookies: { getAll() { return cookieStore.getAll(); }, setAll() {} } }
   );
-  
+
   const { data: { user } } = await supabase.auth.getUser();
-  
+
   let profile: Profile = null;
   if (user) {
     const { data } = await supabase
-      .from('profiles')
-      .select('id, role, wallet_balance, full_name, avatar_url')
+      .from('User')
+      .select('id, role, name')
       .eq('id', user.id)
       .single();
     profile = data as Profile;
   }
 
   return (
-    <html lang="en" className="dark">
-      <body className={`${inter.className} bg-slate-950 text-slate-50 antialiased`}>
-        {/* Mount Global Signaling WebSockets */}
-        {user && <GlobalCallListener userId={user.id} />}
-        
-        {/* Core Layout Controller */}
-        <AppLayout user={user} profile={profile}>
-          {children}
-        </AppLayout>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.className} bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 antialiased`}>
+        <ThemeProvider>
+          <AppLayout user={user} profile={profile}>
+            {children}
+          </AppLayout>
+        </ThemeProvider>
       </body>
     </html>
   );
