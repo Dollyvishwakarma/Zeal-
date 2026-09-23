@@ -8,7 +8,7 @@ export interface GroqMessage {
 
 export interface GroqOptions {
   messages: GroqMessage[];
-  model?: "openai/gpt-oss-120b" | "llama-3.1-8b-instant" | "llama-3.3-70b-versatile";
+  model?: "llama-3.3-70b-versatile" | "llama-3.1-8b-instant";
   temperature?: number;
   maxTokens?: number;
   maxRetries?: number;
@@ -29,15 +29,14 @@ function backoffDelay(attempt: number, baseMs = 500): number {
   return Math.max(100, Math.round(cap + jitter));
 }
 
-// ─── Extract content from Groq response (handles gpt-oss structure) ────────
+// ─── Extract content from Groq response ────────
 function extractContent(data: any): string {
   const choice = data?.choices?.[0];
   if (!choice) return "";
 
-  // Standard path
   let content = choice?.message?.content;
 
-  // gpt-oss-120b: content might be in different fields
+  // Fallback: reasoning field (for reasoning models)
   if (!content || content.trim() === "") {
     content =
       choice?.message?.reasoning ||
@@ -46,7 +45,7 @@ function extractContent(data: any): string {
       "";
   }
 
-  // If content is an array (some models), join it
+  // If content is an array, join it
   if (Array.isArray(content)) {
     content = content
       .map((c: any) => (typeof c === "string" ? c : c?.text ?? ""))
@@ -62,7 +61,7 @@ export async function callGroq(options: GroqOptions): Promise<GroqResult> {
 
   const models: Array<NonNullable<GroqOptions["model"]>> = options.model
     ? [options.model]
-    : ["openai/gpt-oss-120b", "llama-3.1-8b-instant"];
+    : ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
 
   const maxRetries = options.maxRetries ?? 2;
   let lastError: Error | null = null;
@@ -110,7 +109,6 @@ export async function callGroq(options: GroqOptions): Promise<GroqResult> {
 
         const data = await res.json();
 
-        // Debug: log full response structure if content empty
         const content = extractContent(data);
         if (!content) {
           console.warn(`[Groq] Empty content from ${model}. Full response:`, JSON.stringify(data).slice(0, 500));
@@ -152,7 +150,7 @@ export async function streamGroq(options: GroqOptions): Promise<Response> {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: options.model ?? "openai/gpt-oss-120b",
+      model: options.model ?? "llama-3.3-70b-versatile",
       messages: cleanMessages,
       temperature: options.temperature ?? 0.7,
       max_tokens: options.maxTokens ?? 1500,
