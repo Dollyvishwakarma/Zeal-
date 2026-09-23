@@ -19,13 +19,13 @@ const MENU_ITEMS = [
 ];
 
 export function Navbar({ userId }: { userId: string | null }) {
-  const pathname = usePathname();
+  const pathname = usePathname() || "/";
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const isActive = (href: string) => {
-    const base = href.split("?")[0];
+    const base = href.split("?")[0] || "/";
     if (base === "/") return pathname === "/";
-    return pathname?.startsWith(base);
+    return pathname.startsWith(base);
   };
 
   return (
