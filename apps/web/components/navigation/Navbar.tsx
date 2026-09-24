@@ -22,6 +22,17 @@ export function Navbar({ userId }: { userId: string | null }) {
   const pathname = usePathname() || "/";
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  // ✅ Logout handler - signout karke /login pe redirect karta hai
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/signout", { method: "POST" });
+    } catch (err) {
+      console.error("Logout error:", err);
+    } finally {
+      window.location.href = "/login";
+    }
+  };
+
   const isActive = (href: string) => {
     const base = href.split("?")[0] || "/";
     if (base === "/") return pathname === "/";
@@ -142,15 +153,16 @@ export function Navbar({ userId }: { userId: string | null }) {
           })}
 
           {userId && (
-            <form action="/auth/signout" method="post" className="pt-4 border-t border-slate-200 dark:border-white/10 mt-4">
+            <div className="pt-4 border-t border-slate-200 dark:border-white/10 mt-4">
               <button
-                type="submit"
+                type="button"
+                onClick={handleLogout}
                 className="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 w-full"
               >
                 <LogOut size={18} />
                 Logout
               </button>
-            </form>
+            </div>
           )}
         </div>
       </nav>

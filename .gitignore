@@ -55,3 +55,5 @@ eod*.txt
 repo_dump.txt
 eod.txt
 eod2.txt
+# Code dumps (auto-generated)
+code-dump.txt
